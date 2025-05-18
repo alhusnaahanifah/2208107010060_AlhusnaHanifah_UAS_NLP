@@ -6,7 +6,7 @@ import scipy.io.wavfile
 
 def voice_chat(audio):
     if audio is None:
-        return None
+        return None, "Tidak ada input audio. Silakan rekam suara Anda."
     
     sr, audio_data = audio
 
@@ -25,9 +25,9 @@ def voice_chat(audio):
         output_audio_path = os.path.join(tempfile.gettempdir(), "tts_output.wav")
         with open(output_audio_path, "wb") as f:
             f.write(response.content)
-        return output_audio_path
+        return output_audio_path, "Respons berhasil diterima!"
     else:
-        return None
+        return None, f"Gagal mendapatkan respons. Status code: {response.status_code}"
 
 # UI Gradio
 with gr.Blocks() as demo:
@@ -40,11 +40,16 @@ with gr.Blocks() as demo:
             submit_btn = gr.Button("🔁 Submit")
         with gr.Column():
             audio_output = gr.Audio(type="filepath", label="🔊 Balasan dari Asisten")
+            status = gr.Textbox(label="Status", value="Siap mendengarkan...", interactive=False)
 
     submit_btn.click(
+        fn=lambda: (None, "Memproses permintaan Anda..."),
+        outputs=[audio_output, status],
+        queue=False
+    ).then(
         fn=voice_chat,
         inputs=audio_input,
-        outputs=audio_output
+        outputs=[audio_output, status]
     )
 
 demo.launch()
